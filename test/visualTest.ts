@@ -91,25 +91,25 @@ describe("MekkoChart", () => {
 
         it("main element created", () => {
             visualBuilder.updateRenderTimeout(dataView, () => {
-                expect(visualBuilder.mainElement[0]).toBeInDOM();
+                expect(visualBuilder.mainElement).toBeInDOM();
             });
         });
 
         it("update", (done) => {
             visualBuilder.updateRenderTimeout(dataView, () => {
                 expect(visualBuilder.categoriesAxis[0]).toBeInDOM();
-                expect(visualBuilder.categoriesAxis.children("g.tick").length)
+                expect(visualBuilder.categoriesAxisTicks.length)
                     .toBe(dataView.categorical.categories[0].values.length);
 
                 expect(visualBuilder.columnElement[0]).toBeInDOM();
 
-                let series: JQuery = visualBuilder.columnElement.children("g.series"),
+                let series: NodeListOf<HTMLElement> = visualBuilder.series,
                     grouped: DataViewValueColumnGroup[] = dataView.categorical.values.grouped();
 
                 expect(series.length).toBe(grouped.length);
 
                 for (let i: number = 0, length = series.length; i < length; i++) {
-                    expect($(series[i]).children("rect.column").length)
+                    expect(Array.from(series[i].querySelectorAll(":scope > rect.column")).length)
                         .toBe((i === 0
                             ? grouped[i].values[0].values
                             : grouped[i].values[0].values.filter(_.isNumber)).length);
@@ -128,9 +128,8 @@ describe("MekkoChart", () => {
             };
 
             visualBuilder.updateRenderTimeout(dataView, () => {
-                const xTicksElements: HTMLElement[] = visualBuilder.categoriesAxisTicks
-                    .children("text")
-                    .toArray();
+                const xTicksElements: HTMLElement[] = Array.from(visualBuilder.mainElement
+                    .querySelectorAll(":scope > g.axisGraphicsContext > g.x.axis.showLinesOnAxis > g.tick > text"));
 
                 const columnsBottomPosition: number = visualBuilder.columnElement[0]
                     .getBoundingClientRect()
@@ -156,8 +155,8 @@ describe("MekkoChart", () => {
             };
 
             visualBuilder.updateRenderTimeout(dataView, () => {
-                expect(visualBuilder.element.find(".legend")).toHaveCss({ display: "none" });
-                expect(visualBuilder.mainElement[0]).toHaveCss({ display: "none" });
+                expect(visualBuilder.element.querySelector(".legend")).toHaveCss({ display: "none" });
+                expect(visualBuilder.mainElement).toHaveCss({ display: "none" });
 
                 done();
             });
@@ -170,8 +169,8 @@ describe("MekkoChart", () => {
             };
 
             visualBuilder.updateRenderTimeout(dataView, () => {
-                expect(visualBuilder.element.find(".legend")).toHaveCss({ display: "block" });
-                expect(visualBuilder.mainElement[0]).toHaveCss({ display: "block" });
+                expect(visualBuilder.element.querySelector(".legend")).toHaveCss({ display: "block" });
+                expect(visualBuilder.mainElement).toHaveCss({ display: "block" });
 
                 done();
             }, 300);
@@ -190,8 +189,8 @@ describe("MekkoChart", () => {
             };
 
             visualBuilder.updateRenderTimeout(dataView, () => {
-                expect(visualBuilder.element.find(".legend")).toHaveCss({ display: "none" });
-                expect(visualBuilder.mainElement[0]).toHaveCss({ display: "none" });
+                expect(visualBuilder.element.querySelector(".legend")).toHaveCss({ display: "none" });
+                expect(visualBuilder.mainElement).toHaveCss({ display: "none" });
 
                 done();
             });
@@ -204,8 +203,8 @@ describe("MekkoChart", () => {
             };
 
             visualBuilder.updateRenderTimeout(dataView, () => {
-                expect($(visualBuilder.mainElement[0])).toHaveCss({ display: "none" });
-                expect(visualBuilder.element.find(".legend")).toHaveCss({ display: "none" });
+                expect(visualBuilder.mainElement).toHaveCss({ display: "none" });
+                expect(visualBuilder.element.querySelector(".legend")).toHaveCss({ display: "none" });
 
                 done();
             });
@@ -243,11 +242,11 @@ describe("MekkoChart", () => {
 
             visualBuilder.updateRenderTimeout(dataView, () => {
                 checkAxisLabels(
-                    visualBuilder.mainElement[0],
+                    visualBuilder.mainElement,
                     visualBuilder.xAxisLabel[0]);
 
                 checkAxisLabels(
-                    visualBuilder.mainElement[0],
+                    visualBuilder.mainElement,
                     visualBuilder.yAxisLabel[0]);
 
                 done();
@@ -256,7 +255,7 @@ describe("MekkoChart", () => {
 
         function checkAxisLabels(mainElement: Element, textElement: Element): void {
             expect(isTextElementInOrOutElement(
-                visualBuilder.mainElement[0],
+                visualBuilder.mainElement,
                 visualBuilder.xAxisLabel[0],
                 (firstValue: number, secondValue: number) => firstValue >= secondValue)).toBeTruthy();
         }
@@ -270,18 +269,18 @@ describe("MekkoChart", () => {
 
             visualBuilder.updateFlushAllD3Transitions(dataView);
 
-            const columns: JQuery = visualBuilder.columnsWithSize;
+            const columns: NodeListOf<HTMLElement> = visualBuilder.columnsWithSize;
 
-            const firstColumn: JQuery = columns.eq(0),
-                secondColumn: JQuery = columns.eq(1),
-                thirdColumn: JQuery = columns.eq(2);
+            const firstColumn: HTMLElement = columns[0],
+                secondColumn: HTMLElement = columns[1],
+                thirdColumn: HTMLElement = columns[2];
 
             d3Click(firstColumn, 1, 1, ClickEventType.Default, 0);
             d3Click(secondColumn, 1, 1, ClickEventType.CtrlKey, 0);
 
-            expect(parseFloat(firstColumn.css("fill-opacity"))).toBe(1);
-            expect(parseFloat(secondColumn.css("fill-opacity"))).toBe(1);
-            expect(parseFloat(thirdColumn.css("fill-opacity"))).toBeLessThan(1);
+            expect(parseFloat(firstColumn.style.fillOpacity)).toBe(1);
+            expect(parseFloat(secondColumn.style.fillOpacity)).toBe(1);
+            expect(parseFloat(thirdColumn.style.fillOpacity)).toBeLessThan(1);
         });
     });
 
@@ -298,20 +297,18 @@ describe("MekkoChart", () => {
             it("show", () => {
                 visualBuilder.updateFlushAllD3Transitions(dataView);
 
-                visualBuilder.borders
-                    .toArray()
+                Array.from(visualBuilder.borders)
                     .forEach((element: Element) => {
-                        expect(parseFloat($(element).attr("width"))).toBeGreaterThan(0);
+                        expect(parseFloat((element).getAttribute("width"))).toBeGreaterThan(0);
                     });
 
                 (dataView.metadata.objects as any).columnBorder.show = false;
 
                 visualBuilder.updateFlushAllD3Transitions(dataView);
 
-                visualBuilder.borders
-                    .toArray()
+                Array.from(visualBuilder.borders)
                     .forEach((element: Element) => {
-                        expect(parseFloat($(element).attr("width"))).toBe(0);
+                        expect(parseFloat((element).getAttribute("width"))).toBe(0);
                     });
             });
         });
@@ -342,10 +339,9 @@ describe("MekkoChart", () => {
                 (dataView.metadata.objects as any).labels.color = getSolidColorStructuralObject(color);
                 visualBuilder.updateFlushAllD3Transitions(dataView);
 
-                visualBuilder.dataLabels
-                    .toArray()
-                    .forEach((element: Element) => {
-                        assertColorsMatch($(element).css("fill"), color);
+                Array.from(visualBuilder.dataLabels)
+                    .forEach((element: SVGTextElement) => {
+                        assertColorsMatch((element).style.fill, color);
                     });
             });
         });
@@ -362,12 +358,12 @@ describe("MekkoChart", () => {
             it("show", () => {
                 visualBuilder.updateFlushAllD3Transitions(dataView);
 
-                expect(visualBuilder.legendGroup.children()[0]).toBeInDOM();
+                expect(visualBuilder.legendGroup).not.toBeEmpty();
 
                 (dataView.metadata.objects as any).legend.show = false;
                 visualBuilder.updateFlushAllD3Transitions(dataView);
 
-                expect(visualBuilder.legendGroup.children()[0]).not.toBeInDOM();
+                expect(visualBuilder.legendGroup).toBeEmpty();
             });
         });
 
@@ -408,11 +404,10 @@ describe("MekkoChart", () => {
                 (dataView.metadata.objects as any).categoryAxis.labelColor = getSolidColorStructuralObject(color);
                 visualBuilder.updateFlushAllD3Transitions(dataView);
 
-                visualBuilder.xAxisTicks
-                    .children("text")
-                    .toArray()
-                    .forEach((element: Element) => {
-                        assertColorsMatch($(element).css("fill"), color);
+                Array.from(visualBuilder.rootAxisGraphicsContext
+                .querySelectorAll(":scope > g.x.axis > g.tick > text"))
+                    .forEach((element: SVGTextElement) => {
+                        assertColorsMatch((element).style.fill, color);
                     });
             });
         });
@@ -453,11 +448,10 @@ describe("MekkoChart", () => {
                 (dataView.metadata.objects as any).valueAxis.labelColor = getSolidColorStructuralObject(color);
                 visualBuilder.updateFlushAllD3Transitions(dataView);
 
-                visualBuilder.yAxisTicks
-                    .children("text")
-                    .toArray()
-                    .forEach((element: Element) => {
-                        assertColorsMatch($(element).css("fill"), color);
+                Array.from(visualBuilder.svgScrollableAxisGraphicsContext
+                .querySelectorAll(":scope > g.y.axis > g.tick > text"))
+                    .forEach((element: SVGTextElement) => {
+                        assertColorsMatch((element).style.fill, color);
                     });
             });
         });
@@ -534,13 +528,8 @@ describe("MekkoChart", () => {
                         };
 
                         visualBuilder.updateRenderTimeout(dataView, () => {
-                            const fillColor: string = visualBuilder.mainElement
-                                .find("rect.mekkoborder")
-                                .first()
-                                .css("fill");
-
+                            const fillColor: string = visualBuilder.borders[0].style.fill;
                             assertColorsMatch(fillColor, color);
-
                             done();
                         });
 
@@ -561,16 +550,14 @@ describe("MekkoChart", () => {
 
                         visualBuilder.updateRenderTimeout(dataView, () => {
                             const xAxisFontSize: string = visualBuilder.mainElement
-                                .find(".x.axis g.tick text")
-                                .first()
-                                .attr("font-size");
+                                .querySelectorAll(".x.axis g.tick text")[0]
+                                .getAttribute("font-size");
 
                             expect(xAxisFontSize).toBe(toString(fromPointToPixel(categoryAxisFontSize)));
 
                             const yAxisFontSize: string = visualBuilder.mainElement
-                                .find(".y.axis g.tick text")
-                                .first()
-                                .attr("font-size");
+                                .querySelectorAll(".y.axis g.tick text")[0]
+                                .getAttribute("font-size");
 
                             expect(yAxisFontSize).toBe(toString(fromPointToPixel(valueAxisFontSize)));
 
@@ -588,9 +575,8 @@ describe("MekkoChart", () => {
                         };
 
                         visualBuilder.updateRenderTimeout(dataView, () => {
-                            const firstLabelText: string = visualBuilder.dataLabels
-                                .first()
-                                .text();
+                            const firstLabelText: string = visualBuilder.dataLabels[0]
+                                .textContent;
 
                             expect(firstLabelText).toMatch(/[0-9.]*M/);
 
@@ -607,9 +593,8 @@ describe("MekkoChart", () => {
                         };
 
                         visualBuilder.updateRenderTimeout(dataView, () => {
-                            const firstLabelText: string = visualBuilder.dataLabels
-                                .first()
-                                .text();
+                            const firstLabelText: string = visualBuilder.dataLabels[0]
+                                .textContent;
 
                             expect(firstLabelText).toMatch(/[0-9.]*K/);
 
@@ -628,9 +613,8 @@ describe("MekkoChart", () => {
                         };
 
                         visualBuilder.updateRenderTimeout(dataView, () => {
-                            const firstLabelText: string = visualBuilder.dataLabels
-                                .first()
-                                .text();
+                            const firstLabelText: string = visualBuilder.dataLabels[0]
+                                .textContent;
 
                             expect(firstLabelText).toMatch(/\d*[.]\d{4}%/);
 
@@ -676,9 +660,9 @@ describe("MekkoChart", () => {
 
             array = _.sortBy(array, "data");
             visualBuilder.updateRenderTimeout(dataView, () => {
-                expect(visualBuilder.legendGroup[0]).toBeInDOM();
+                expect(visualBuilder.legendGroup).toBeInDOM();
                 array.forEach((element, index) => {
-                    let textElements = visualBuilder.legendGroup.children("g").children("text");
+                    let textElements = visualBuilder.legendGroup.querySelectorAll(":scope > g > text");
                     expect(element.key).toEqual(textElements[index].textContent);
                 });
                 done();
@@ -706,9 +690,9 @@ describe("MekkoChart", () => {
 
             visualBuilder.updateRenderTimeout(dataView, () => {
                 expect(visualBuilder.categoryLegendGroup[0]).toBeInDOM();
-                expect(visualBuilder.categoryLegendGroup.length).toEqual(dataView.categorical.categories[0].values.length);
+                expect(Array.from(visualBuilder.categoryLegendGroup).length).toEqual(dataView.categorical.categories[0].values.length);
 
-                let mappedCategoryLegendGroup: JQuery<CategoryLegendDom> = visualBuilder.categoryLegendGroup.map((index, clg) => {
+                let mappedCategoryLegendGroup: Array<CategoryLegendDom> = Array.from(visualBuilder.categoryLegendGroup).map((clg) => {
                     return <CategoryLegendDom>{
                         position: clg.parentElement.parentElement.style.top.replace("px", ""),
                         dom: clg
@@ -718,8 +702,12 @@ describe("MekkoChart", () => {
                 dataView.categorical.categories[0].values.forEach((category, index) => {
                     let filteredByCategory = catigoried.filter(cat => cat.category === index);
                     filteredByCategory = _.sortBy(filteredByCategory, "values");
-                    let categoryDOM: any = mappedCategoryLegendGroup.filter((val: any) => { return <any>$((<any>mappedCategoryLegendGroup[val]).dom).children("text.legendTitle").children("title").text() === category; });
-                    let legentItem = $((categoryDOM[0].dom)).children("g").children("text");
+                    let categoryDOM: any = mappedCategoryLegendGroup
+                        .filter((val: CategoryLegendDom) => {
+                            return <boolean>(val.dom.querySelector(":scope > text.legendTitle > title")
+                            && val.dom.querySelector(":scope > text.legendTitle > title").textContent === category);
+                        });
+                    let legentItem = ((categoryDOM[0].dom)).querySelectorAll(":scope > g > text");
                     expect(filteredByCategory.length).toEqual(legentItem.length);
                     filteredByCategory.forEach((categoryItem, index) => {
                         expect(legentItem[index].textContent).toEqual(categoryItem.name);
@@ -778,7 +766,8 @@ describe("MekkoChart", () => {
 
             visualBuilder.updateRenderTimeout(dataView, () => {
                 let expectedDegree: number = -45;
-                visualBuilder.xAxisTicks.children("text").each((index, element) => {
+                visualBuilder.rootAxisGraphicsContext
+                    .querySelectorAll(":scope > g.x.axis > g.tick > text").forEach((element) => {
                     expect(MekkoChart.getTranslation(select(element).attr("transform"))[2]).toBeCloseTo(expectedDegree);
                 });
                 done();
@@ -805,7 +794,7 @@ describe("MekkoChart", () => {
             };
 
             visualBuilder.updateRenderTimeout(dataView, () => {
-                let seriesElements = visualBuilder.mainElement.find(".columnChartMainGraphicsContext")[0].children;
+                let seriesElements = visualBuilder.mainElement.querySelectorAll(".columnChartMainGraphicsContext")[0].children;
                 let mappedSeries = [];
                 const firstCtegory: number = 0;
                 const secondCtegory: number = 1;
@@ -840,9 +829,9 @@ describe("MekkoChart", () => {
     });
 
     describe("Highlight test", () => {
-        let dataLabels: JQuery<any>[];
-        let columns: JQuery<any>[];
-        let columnsWithoutSize: JQuery<any>[];
+        let dataLabels: SVGTextElement[];
+        let columns: HTMLElement[];
+        let columnsWithoutSize: HTMLElement[];
         let dataViewWithHighLighted: DataView;
         let highlightedColumnWithoutHeight: boolean = false;
 
@@ -850,8 +839,8 @@ describe("MekkoChart", () => {
             dataViewWithHighLighted = defaultDataViewBuilder.getDataView(undefined, true);
             visualBuilder.update(dataViewWithHighLighted);
 
-            columns = visualBuilder.columnsWithSize.toArray().map($);
-            columnsWithoutSize = visualBuilder.columnsWithoutSize.toArray().map($);
+            columns = Array.from(visualBuilder.columnsWithSize);
+            columnsWithoutSize = Array.from(visualBuilder.columnsWithoutSize);
         });
 
         it("bars rendering", (done) => {
@@ -860,13 +849,13 @@ describe("MekkoChart", () => {
                 let notHighligtedColumnsCount: number = 0;
 
                 columnsWithoutSize.forEach(column => {
-                    if (column.hasClass("highlight")) {
+                    if (column.classList.contains("highlight")) {
                         highlightedColumnWithoutHeight = true;
                         return;
                     }
                 });
                 columns.forEach(column => {
-                    if (Number(column.css("fill-opacity")) !== 1)
+                    if (Number(column.style.fillOpacity) !== 1)
                         notHighligtedColumnsCount++;
                 });
 
@@ -887,12 +876,12 @@ describe("MekkoChart", () => {
             visualBuilder.update(dataViewWithHighLighted);
             visualBuilder.updateRenderTimeout(dataViewWithHighLighted, () => {
                 columnsWithoutSize.forEach(column => {
-                    if (column.hasClass("highlight")) {
+                    if (column.classList.contains("highlight")) {
                         highlightedColumnWithoutHeight = true;
                         return;
                     }
                 });
-                dataLabels = visualBuilder.dataLabels.toArray().map($);
+                dataLabels = Array.from(visualBuilder.dataLabels);
 
                 const expectedHighlightedDataLabelsCount: number = highlightedColumnWithoutHeight ? 0 : 1;
                 // for data with tiny values

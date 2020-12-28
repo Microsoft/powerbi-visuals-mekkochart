@@ -41,8 +41,6 @@ import ISelectionHandler = interactivityBaseService.ISelectionHandler;
 import IInteractiveBehavior = interactivityBaseService.IInteractiveBehavior;
 import SelectionDataPoint = interactivitySelectionService.SelectableDataPoint;
 
-const getEvent = () => require("d3-selection").event;
-
 export class VisualBehavior implements IInteractiveBehavior {
     private options: VisualBehaviorOptions;
 
@@ -54,16 +52,16 @@ export class VisualBehavior implements IInteractiveBehavior {
 
         const eventGroup: Selection<any, any, any, any> = options.eventGroup;
 
-        eventGroup.on("click", function () {
-            const dataOfTheLastEvent: SelectionDataPoint = VisualBehavior.getDatumForLastInputEvent();
+        eventGroup.on("click", function (e) {
+            const dataOfTheLastEvent: SelectionDataPoint = VisualBehavior.getDatumForLastInputEvent(e);
 
             selectionHandler.handleSelection(
                 dataOfTheLastEvent,
-                (getEvent() as MouseEvent).ctrlKey);
+                e.ctrlKey);
         });
 
-        eventGroup.on("contextmenu", function () {
-            const mouseEvent: MouseEvent = getEvent() as MouseEvent;
+        eventGroup.on("contextmenu", function (e) {
+            const mouseEvent: MouseEvent = e;
 
             if (mouseEvent.ctrlKey) {
                 return;
@@ -83,8 +81,8 @@ export class VisualBehavior implements IInteractiveBehavior {
         });
     }
 
-    private static getDatumForLastInputEvent(): SelectionDataPoint {
-        const target: EventTarget = (getEvent() as MouseEvent).target;
+    private static getDatumForLastInputEvent(e): SelectionDataPoint {
+        const target: EventTarget = e.target;
         return select((<any>target)).datum() as any;
     }
 }

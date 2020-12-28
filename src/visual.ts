@@ -46,6 +46,7 @@ import DataViewPropertyValue = powerbi.DataViewPropertyValue;
 import SortDirection = powerbi.SortDirection;
 import IVisual = powerbi.extensibility.visual.IVisual;
 import VisualObjectInstanceEnumeration = powerbi.VisualObjectInstanceEnumeration;
+import ISelectionManager = powerbi.extensibility.ISelectionManager;
 
 import {
     MekkoColumnChartData,
@@ -74,7 +75,8 @@ import {
     MekkoChartDataPoint,
     ILegendGroup,
     MekkoChartDataLabelObject,
-    Selection
+    Selection,
+    MekkoChartColumnDataPoint
 } from "./dataInterfaces";
 
 import {
@@ -97,8 +99,8 @@ import {
     from "powerbi-visuals-utils-dataviewutils";
 
 import { max, sum } from "d3-array";
-import { select } from "d3-selection";
 import { brushX, BrushBehavior } from "d3-brush";
+import { select } from "d3-selection";
 
 // powerbi.extensibility.utils.chart
 import {
@@ -412,6 +414,7 @@ export class MekkoChart implements IVisual {
     private layerLegendData: ILegendData;
     private hasSetData: boolean;
     private visualInitOptions: VisualConstructorOptions;
+    private selectionManager: ISelectionManager;
 
     private borderObjectProperties: powerbi.DataViewObject;
     private legendObjectProperties: powerbi.DataViewObject;
@@ -449,6 +452,21 @@ export class MekkoChart implements IVisual {
 
     constructor(options: VisualConstructorOptions) {
         this.init(options);
+    }
+
+    private handleContextMenu() {
+        this.rootElement.on("contextmenu", (e) => {
+
+            const mouseEvent: MouseEvent = e;
+            const eventTarget: EventTarget = mouseEvent.target;
+
+            let dataPoint: any = select(<d3.BaseType>eventTarget).datum();
+            this.selectionManager.showContextMenu(dataPoint ? dataPoint.identity : {}, {
+                x: mouseEvent.clientX,
+                y: mouseEvent.clientY
+            });
+            mouseEvent.preventDefault();
+        });
     }
 
     public init(options: VisualConstructorOptions) {
@@ -515,6 +533,9 @@ export class MekkoChart implements IVisual {
             .classed(MekkoChart.HideLinesOnAxisSelector.className, false);
 
         this.interactivityService = createInteractivityService(this.visualHost);
+
+        this.selectionManager = options.host.createSelectionManager();
+        this.handleContextMenu();
 
         let legendParent = select(this.rootElement.node()).append("div").classed("legendParentDefault", true);
 
@@ -609,8 +630,8 @@ export class MekkoChart implements IVisual {
                 )
                 .style(
                     "fill", options.xLabelColor
-                        ? options.xLabelColor.solid.color
-                        : null
+                    ? options.xLabelColor.solid.color
+                    : null
                 )
                 .text(options.axisLabels.x)
                 .classed(MekkoChart.XAxisLabelSelector.className, true);
@@ -625,15 +646,15 @@ export class MekkoChart implements IVisual {
             const yAxisLabel: Selection = this.axisGraphicsContext.append("text")
                 .style(
                     "fill", options.yLabelColor
-                        ? options.yLabelColor.solid.color
-                        : null
+                    ? options.yLabelColor.solid.color
+                    : null
                 )
                 .text(options.axisLabels.y)
                 .attr("transform", MekkoChart.TransformRotate)
                 .attr(
                     "y", showOnRight
-                        ? width + margin.right - fontSize
-                        : -margin.left
+                    ? width + margin.right - fontSize
+                    : -margin.left
                 )
                 .attr("x", -((height - margin.top - options.legendMargin) / MekkoChart.XDelimiter))
                 .attr("dy", MekkoChart.DefaultDy)
@@ -653,8 +674,8 @@ export class MekkoChart implements IVisual {
                 .attr("dy", MekkoChart.DefaultDy)
                 .style(
                     "fill", options.y2LabelColor
-                        ? options.y2LabelColor.solid.color
-                        : null
+                    ? options.y2LabelColor.solid.color
+                    : null
                 )
                 .classed(MekkoChart.YAxisLabelSelector.className, true);
 
@@ -847,6 +868,7 @@ export class MekkoChart implements IVisual {
     public update(options: VisualUpdateOptions) {
         this.dataViews = options.dataViews;
         this.currentViewport = options.viewport;
+
         if (!this.checkDataset()) {
             this.clearViewport();
             return;

@@ -1,3 +1,8 @@
+## 3.2.6
+* Removed JQuery
+* Updated "d3" dependencies
+* Added context menu handle for mobile devices
+
 ## 3.1.0
 * Fix selection rendering issue
 * Fix rendering of filtered series

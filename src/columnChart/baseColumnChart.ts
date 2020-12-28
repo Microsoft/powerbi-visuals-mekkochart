@@ -40,7 +40,7 @@ import {
     IMargin,
     CssConstants
 }
-from "powerbi-visuals-utils-svgutils";
+    from "powerbi-visuals-utils-svgutils";
 
 import {
     axis as AxisHelper,
@@ -49,7 +49,7 @@ import {
     dataLabelUtils,
     dataLabelInterfaces
 }
-from "powerbi-visuals-utils-chartutils";
+    from "powerbi-visuals-utils-chartutils";
 
 import {
     prototype as Prototype,
@@ -57,19 +57,19 @@ import {
     enumExtensions,
     arrayExtensions
 }
-from "powerbi-visuals-utils-typeutils";
+    from "powerbi-visuals-utils-typeutils";
 
 import {
     interactivitySelectionService,
     interactivityBaseService
 }
-from "powerbi-visuals-utils-interactivityutils";
+    from "powerbi-visuals-utils-interactivityutils";
 
 import {
     valueFormatter as vf,
     displayUnitSystemType
 }
-from "powerbi-visuals-utils-formattingutils";
+    from "powerbi-visuals-utils-formattingutils";
 
 import {
     TooltipEventArgs,
@@ -77,7 +77,7 @@ import {
     TooltipEnabledDataPoint,
     createTooltipServiceWrapper
 }
-from "powerbi-visuals-utils-tooltiputils";
+    from "powerbi-visuals-utils-tooltiputils";
 
 import {
     MekkoColumnChartData,
@@ -108,7 +108,7 @@ import {
     MekkoChartBaseData,
     MekkoChartConstructorBaseOptions
 }
-from "./../dataInterfaces";
+    from "./../dataInterfaces";
 
 import * as axisUtils from "./../axis/utils";
 
@@ -1748,11 +1748,15 @@ export class BaseColumnChart implements IColumnChart {
         this.mainGraphicsContext.attr("height", height);
         this.mainGraphicsContext.attr("width", width);
 
-        this.tooltipServiceWrapper.addTooltip<TooltipEnabledDataPoint>(
+        this.tooltipServiceWrapper.addTooltip<MekkoChartColumnDataPoint>(
             chartDrawInfo.shapesSelection,
-            (tooltipEvent: TooltipEventArgs<TooltipEnabledDataPoint>) => {
-                return tooltipEvent.data.tooltipInfo;
-            });
+            (data: MekkoChartColumnDataPoint): VisualTooltipDataItem[] => {
+                return data.tooltipInfo;
+            },
+            (data: MekkoChartColumnDataPoint) => {
+                return data.identity;
+            }
+        );
 
         let dataPoints: MekkoChartColumnDataPoint[] = [];
         let behaviorOptions: VisualBehaviorOptions = undefined;
